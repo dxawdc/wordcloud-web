@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词云制作工具 · 网页版</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#1a1d27; --panel2:#232734; --line:#2e3340;
+    --txt:#e6e8ee; --muted:#9aa3b2; --accent:#ff8a3d; --accent2:#5b8cff;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    background:var(--bg);color:var(--txt);font-size:14px;line-height:1.6}
+  header{padding:20px 28px;border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:14px}
+  header h1{font-size:19px;margin:0;font-weight:700}
+  header .sub{color:var(--muted);font-size:12px}
+  .wrap{display:grid;grid-template-columns:380px 1fr;gap:0;min-height:calc(100vh - 65px)}
+  .panel{padding:20px 24px;border-right:1px solid var(--line);overflow-y:auto;
+    max-height:calc(100vh - 65px)}
+  .preview{padding:24px;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:16px}
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{flex:1;padding:10px;text-align:center;background:var(--panel2);
+    border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;
+    color:var(--muted);transition:.15s;user-select:none}
+  .tab.active{background:var(--accent);color:#1a1d27;border-color:var(--accent);font-weight:700}
+  label{display:block;margin:14px 0 6px;font-size:13px;color:var(--muted)}
+  textarea,input[type=text],input[type=number],select{
+    width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;color:var(--txt);padding:9px 11px;font-size:13px;font-family:inherit}
+  textarea{resize:vertical;min-height:90px}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent2)}
+  .row{display:flex;gap:10px}.row>div{flex:1}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .seg{display:flex;gap:6px;margin-top:4px}
+  .seg span{flex:1;text-align:center;padding:8px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:12px}
+  .seg span.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .btn{width:100%;margin-top:20px;padding:13px;border:none;border-radius:var(--radius);
+    background:var(--accent);color:#1a1d27;font-size:15px;font-weight:700;cursor:pointer}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  details{margin-top:16px;border-top:1px solid var(--line);padding-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  .hidden{display:none}
+  #img{max-width:100%;max-height:72vh;border-radius:var(--radius);
+    box-shadow:0 8px 40px rgba(0,0,0,.5);background:#fff}
+  .ph{color:var(--muted);text-align:center;padding:60px 20px;
+    border:2px dashed var(--line);border-radius:var(--radius);width:100%}
+  .toolbar{display:flex;gap:12px;align-items:center}
+  .toolbar a{color:var(--accent);text-decoration:none;font-weight:600}
+  .err{color:#ff6b6b;font-size:13px}
+  .imp{float:right;color:var(--accent2);cursor:pointer;font-size:12px;font-weight:400}
+  .imp:hover{text-decoration:underline}
+  .swatches{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .sw{border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;
+    background:var(--panel2);transition:.12s}
+  .sw:hover{border-color:var(--accent2)}
+  .sw.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .sw .bar{height:16px;border-radius:4px;display:flex;overflow:hidden}
+  .sw .bar i{flex:1}
+  .sw .nm{font-size:11px;color:var(--muted);margin-top:4px;text-align:center}
+  .sw.on .nm{color:var(--txt)}
+  .cmap-dd{margin-top:4px}
+  .cmap-dd>summary{list-style:none;display:flex;align-items:center;gap:8px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:8px 11px;cursor:pointer}
+  .cmap-dd>summary::-webkit-details-marker{display:none}
+  .cmap-dd>summary .bar{flex:1;height:16px;border-radius:4px;display:flex;overflow:hidden}
+  .cmap-dd>summary .bar i{flex:1}
+  .cmap-dd .nm2{font-size:12px;color:var(--txt);min-width:50px;text-align:right}
+  .cmap-dd .arrow{color:var(--muted);font-size:10px;transition:.15s}
+  .cmap-dd[open] .arrow{transform:rotate(180deg)}
+  .cmap-dd .swatches{margin-top:8px}
+  .icon-dd{margin-top:4px}
+  .icon-dd>summary{list-style:none;display:flex;align-items:center;gap:8px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:7px 11px;cursor:pointer}
+  .icon-dd>summary::-webkit-details-marker{display:none}
+  .icon-dd>summary img{width:22px;height:22px}
+  .icon-dd>summary .nm2{flex:1;font-size:12px;color:var(--txt)}
+  .icon-dd>summary .arrow{color:var(--muted);font-size:10px;transition:.15s}
+  .icon-dd[open]>summary .arrow{transform:rotate(180deg)}
+  .icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+  .ic{border:1px solid var(--line);border-radius:8px;padding:8px 4px;cursor:pointer;
+    background:var(--panel2);text-align:center;transition:.12s}
+  .ic:hover{border-color:var(--accent2)}
+  .ic.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .ic img{width:26px;height:26px;display:block;margin:0 auto}
+  .ic .nm{font-size:11px;color:var(--muted);margin-top:4px}
+  .ic.on .nm{color:var(--txt)}
+  .spin{width:16px;height:16px;border:2px solid rgba(26,29,39,.3);
+    border-top-color:#1a1d27;border-radius:50%;display:inline-block;
+    animation:r .7s linear infinite;vertical-align:-3px;margin-right:6px}
+  @keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>词云制作工具</h1>
+  <span class="sub">网页版 · wordcloud + jieba</span>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="tabs">
+      <div class="tab active" data-mode="text">整段文本分词</div>
+      <div class="tab" data-mode="freq">关键词 + 权重</div>
+    </div>
+
+    <!-- 文本输入 -->
+    <div id="block-text">
+      <label>待绘制文本<span class="imp" onclick="document.getElementById('file-text').click()">⬆ 导入文件</span></label>
+      <input type="file" id="file-text" accept=".txt,.csv,.xlsx" class="hidden"
+        onchange="importFile('text','content-text',this)">
+      <textarea id="content-text" placeholder="粘贴一段中文文本，自动分词后生成词云…"></textarea>
+      <div class="row">
+        <div>
+          <label>自定义词（保证不被切开）</label>
+          <textarea id="add_words" style="min-height:56px" placeholder="词之间用 / 或换行分隔"></textarea>
+        </div>
+        <div>
+          <label>停用词（不出现在图中）</label>
+          <textarea id="stop_words" style="min-height:56px" placeholder="词之间用 / 或换行分隔"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 词频输入 -->
+    <div id="block-freq" class="hidden">
+      <label>关键词 与 权重（每行一条）<span class="imp" onclick="document.getElementById('file-freq').click()">⬆ 导入文件</span></label>
+      <input type="file" id="file-freq" accept=".txt,.csv,.xlsx" class="hidden"
+        onchange="importFile('freq','content-freq',this)">
+      <textarea id="content-freq" style="min-height:160px"
+        placeholder="格式：关键词 权重&#10;例如：&#10;人工智能 95&#10;大模型 88&#10;词云 60"></textarea>
+      <div class="hint">分隔符支持空格 / 逗号 / 制表符（可直接从 Excel 两列粘贴）；或点右上「导入文件」上传 txt/csv/xlsx</div>
+    </div>
+
+    <label>词云形状（蒙版）</label>
+    <div class="seg" id="mask-seg">
+      <span class="on" data-mask="none">矩形</span>
+      <span data-mask="icon">图标形状</span>
+      <span data-mask="image">上传 PNG</span>
+    </div>
+    <div id="mask-icon" class="hidden">
+      <label>选择图标</label>
+      <details class="icon-dd" id="iconDD">
+        <summary>
+          <img id="iconImg" alt="">
+          <span class="nm2" id="iconName"></span>
+          <span class="arrow">▾</span>
+        </summary>
+        <div class="icon-grid" id="iconGrid">
+          {% for s in icon_swatches %}
+          <div class="ic{% if loop.first %} on{% endif %}" data-icon="{{s.name}}">
+            <img src="{{s.img}}" alt="{{s.name}}">
+            <div class="nm">{{s.name}}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    <div id="mask-image" class="hidden">
+      <label>上传 PNG 背景图（白底，深色形状）</label>
+      <input type="file" id="mask_file" accept="image/png,image/jpeg">
+    </div>
+
+    <label>字体</label>
+    <select id="font">
+      {% for f in fonts %}<option value="{{f}}">{{f}}</option>{% endfor %}
+    </select>
+
+    <label>配色</label>
+    <details class="cmap-dd" id="cmapDD">
+      <summary>
+        <div class="bar" id="cmapBar"></div>
+        <span class="nm2" id="cmapName"></span>
+        <span class="arrow">▾</span>
+      </summary>
+      <div class="swatches" id="swatches">
+        {% for s in swatches %}
+        <div class="sw{% if loop.first %} on{% endif %}" data-cmap="{{s.name}}">
+          <div class="bar">{% for c in s.colors %}<i style="background:{{c}}"></i>{% endfor %}</div>
+          <div class="nm">{{s.name}}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+
+    <details>
+      <summary>高级参数</summary>
+      <div class="row">
+        <div><label>背景色</label>
+          <select id="bg_color">
+            <option value="white">白色</option>
+            <option value="black">黑色</option>
+            <option value="#f5f5f5">浅灰</option>
+            <option value="#1a1d27">深蓝灰</option>
+          </select>
+        </div>
+        <div><label>最大词数</label><input type="number" id="max_words" value="200"></div>
+      </div>
+      <div class="row">
+        <div><label>宽(px)</label><input type="number" id="width" value="1200"></div>
+        <div><label>高(px)</label><input type="number" id="height" value="800"></div>
+      </div>
+      <div class="hint">选择图标 / 上传图片时，尺寸由蒙版决定，宽高将被忽略。</div>
+      <div class="row">
+        <div><label>最大字号</label><input type="number" id="max_font_size" value="200"></div>
+        <div><label>最小字号</label><input type="number" id="min_font_size" value="8"></div>
+      </div>
+    </details>
+
+    <button class="btn" id="go">生成词云</button>
+    <div id="err" class="err"></div>
+  </div>
+
+  <div class="preview">
+    <div id="ph" class="ph">填写左侧内容，点击「生成词云」<br>结果将显示在这里</div>
+    <img id="img" class="hidden">
+    <div class="toolbar hidden" id="toolbar">
+      <span id="meta" class="sub"></span>
+      <a id="dl" download="词云.png">⬇ 下载 PNG</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let mode = "text", maskType = "none", colormap = "Set2", icon = "";
+
+function syncIcon() {
+  const on = document.querySelector("#iconGrid .ic.on");
+  document.getElementById("iconImg").src = on.querySelector("img").src;
+  document.getElementById("iconName").textContent = on.dataset.icon;
+  icon = on.dataset.icon;
+}
+document.querySelectorAll("#iconGrid .ic").forEach(s => s.onclick = () => {
+  document.querySelectorAll("#iconGrid .ic").forEach(x => x.classList.remove("on"));
+  s.classList.add("on");
+  syncIcon();
+  document.getElementById("iconDD").open = false;
+});
+syncIcon();
+
+function syncCmap() {
+  const on = document.querySelector("#swatches .sw.on");
+  document.getElementById("cmapBar").innerHTML = on.querySelector(".bar").innerHTML;
+  document.getElementById("cmapName").textContent = on.dataset.cmap;
+  colormap = on.dataset.cmap;
+}
+document.querySelectorAll("#swatches .sw").forEach(s => s.onclick = () => {
+  document.querySelectorAll("#swatches .sw").forEach(x => x.classList.remove("on"));
+  s.classList.add("on");
+  syncCmap();
+  document.getElementById("cmapDD").open = false;  // 选完自动折叠
+});
+syncCmap();  // 初始化预览条
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  mode = t.dataset.mode;
+  document.getElementById("block-text").classList.toggle("hidden", mode !== "text");
+  document.getElementById("block-freq").classList.toggle("hidden", mode !== "freq");
+});
+
+document.querySelectorAll("#mask-seg span").forEach(s => s.onclick = () => {
+  document.querySelectorAll("#mask-seg span").forEach(x => x.classList.remove("on"));
+  s.classList.add("on");
+  maskType = s.dataset.mask;
+  document.getElementById("mask-icon").classList.toggle("hidden", maskType !== "icon");
+  document.getElementById("mask-image").classList.toggle("hidden", maskType !== "image");
+});
+
+async function importFile(mode, targetId, inp) {
+  const f = inp.files[0];
+  const err = document.getElementById("err");
+  err.textContent = "";
+  if (!f) return;
+  const fd = new FormData();
+  fd.append("file", f);
+  fd.append("mode", mode);
+  try {
+    const r = await fetch("/api/import", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "导入失败");
+    document.getElementById(targetId).value = j.content;
+  } catch (e) {
+    err.textContent = "✖ 导入失败：" + e.message;
+  } finally {
+    inp.value = "";  // 允许再次选择同一文件
+  }
+}
+
+document.getElementById("go").onclick = async () => {
+  const btn = document.getElementById("go");
+  const err = document.getElementById("err");
+  err.textContent = "";
+  const fd = new FormData();
+  fd.append("mode", mode);
+  fd.append("content", document.getElementById(mode === "freq" ? "content-freq" : "content-text").value);
+  fd.append("add_words", document.getElementById("add_words").value);
+  fd.append("stop_words", document.getElementById("stop_words").value);
+  fd.append("font", document.getElementById("font").value);
+  fd.append("colormap", colormap);
+  fd.append("bg_color", document.getElementById("bg_color").value);
+  fd.append("mask_type", maskType);
+  fd.append("icon", icon);
+  ["width","height","max_words","max_font_size","min_font_size"].forEach(k =>
+    fd.append(k, document.getElementById(k).value));
+  const file = document.getElementById("mask_file").files[0];
+  if (maskType === "image" && file) fd.append("mask_file", file);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>生成中…';
+  try {
+    const r = await fetch("/api/generate", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "生成失败");
+    const img = document.getElementById("img");
+    img.src = j.image;
+    img.classList.remove("hidden");
+    document.getElementById("ph").classList.add("hidden");
+    document.getElementById("toolbar").classList.remove("hidden");
+    document.getElementById("dl").href = j.image;
+    document.getElementById("meta").textContent = "共 " + j.count + " 个词";
+  } catch (e) {
+    err.textContent = "✖ " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "生成词云";
+  }
+};
+</script>
+</body>
+</html>

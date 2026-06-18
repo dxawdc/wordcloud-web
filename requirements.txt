@@ -1,0 +1,8 @@
+flask
+wordcloud
+jieba
+pillow
+numpy
+stylecloud
+openpyxl
+setuptools<81

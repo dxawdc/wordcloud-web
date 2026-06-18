@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# 运行产物
+server.log
+stylecloud.png
+词云.png
+
+# IDE / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 测试与临时文件
+.playwright-mcp/
+test_*.txt
+test_*.csv
+test_*.xlsx
