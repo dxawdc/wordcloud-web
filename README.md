@@ -2,6 +2,14 @@
 
 基于 **Flask + wordcloud + jieba** 的中文词云在线生成工具。打开网页即可使用,支持整段文本分词、关键词权重、图标/图片蒙版,词云在服务端渲染成 PNG 返回。
 
+<!-- caige-author:start -->
+**作者：才哥** · 微信公众号：**可以叫我才哥**
+
+微信扫码关注：
+
+<img src="assets/caige-wechat-qrcode.jpg" alt="微信公众号「可以叫我才哥」扫码关注二维码" width="172" height="172" />
+<!-- caige-author:end -->
+
 ## 界面预览
 
 **整段文本分词 · 矩形词云**
